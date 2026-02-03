@@ -6,7 +6,7 @@ import {GasErrors} from "../library/Errors.sol";
 
 abstract contract LiFiHandler {
     address public lifiDiamond;
-    IERC20 internal immutable _usdc;
+    IERC20 internal immutable USDC;
 
     event LiFiBridgeExecuted(
         address indexed user,
@@ -20,7 +20,7 @@ abstract contract LiFiHandler {
     );
 
     constructor(address usdc_) {
-        _usdc = IERC20(usdc_);
+        USDC = IERC20(usdc_);
     }
 
     function _executeLifiBridge(
@@ -31,7 +31,7 @@ abstract contract LiFiHandler {
         if (lifiDiamond == address(0)) revert GasErrors.LifiNotConfigured();
         if (lifiData.length == 0) revert GasErrors.LifiBridgeFailed();
 
-        _usdc.approve(lifiDiamond, amount);
+        USDC.approve(lifiDiamond, amount);
 
         (bool success, ) = lifiDiamond.call(lifiData);
         if (!success) revert GasErrors.LifiBridgeFailed();
