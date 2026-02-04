@@ -13,19 +13,24 @@ library GasErrors {
     error ExpiryTooShort();
     error ExpiryTooLong();
     error ChainNotSupported();
-    error PriceStale();
+    error InvalidPrice();
 
     // Credit errors
     error InvalidCreditId();
     error CreditInactive();
     error CreditExpired();
+    error CreditNotExpired();
     error InsufficientGasUnits();
     error NoSavingsAvailable();
     error InvalidRecipient();
 
     // Access errors
-    error NotOracle();
+    error NotRelayer();
     error FeeTooHigh();
+
+    // Relayer errors
+    error InvalidUserSignature();
+    error IntentExpired();
 
     // Transfer errors
     error TransferFailed();
