@@ -206,10 +206,17 @@ contract InvestInGasFutures is Ownable, Pausable, ReentrancyGuard, LiFiHandler {
         uint256 currentPriceGwei,
         uint256 ethPriceUsd,
         uint256 timestamp,
-        bytes calldata userSignature
+        bytes calldata userSignature,
+        bytes calldata lifiData,
+        bool cashSettlement
     ) external nonReentrant whenNotPaused onlyRelayer returns (uint256) {
         if (block.timestamp - timestamp > 5 minutes)
             revert GasErrors.IntentExpired();
+
+        bytes32 lifiDataHash;
+        assembly {
+            lifiDataHash := keccak256(lifiData.offset, lifiData.length)
+        }
 
         bytes32 messageHash = SignatureUtils.hashRedeemMessage(
             user,
@@ -217,7 +224,9 @@ contract InvestInGasFutures is Ownable, Pausable, ReentrancyGuard, LiFiHandler {
             gasUnitsToUse,
             currentPriceGwei,
             ethPriceUsd,
-            timestamp
+            timestamp,
+            lifiDataHash,
+            cashSettlement
         );
         bytes32 ethSignedHash = SignatureUtils.toEthSignedMessageHash(
             messageHash
@@ -253,8 +262,13 @@ contract InvestInGasFutures is Ownable, Pausable, ReentrancyGuard, LiFiHandler {
         if (credit.remainingGasUnits == 0) {
             credit.isActive = false;
         }
-        bool success = USDC.transfer(user, savedAmount);
-        if (!success) revert GasErrors.TransferFailed();
+
+        if (cashSettlement) {
+            bool success = USDC.transfer(user, savedAmount);
+            if (!success) revert GasErrors.TransferFailed();
+        } else {
+            _executeLifiBridge(savedAmount, lifiData, credit.targetChain);
+        }
 
         emit CreditsRedeemed(
             user,
@@ -263,7 +277,7 @@ contract InvestInGasFutures is Ownable, Pausable, ReentrancyGuard, LiFiHandler {
             savedAmount,
             credit.targetChain,
             currentPriceGwei,
-            true
+            cashSettlement
         );
 
         return savedAmount;

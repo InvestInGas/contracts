@@ -96,7 +96,9 @@ library SignatureUtils {
         uint256 gasUnitsToUse,
         uint256 currentPriceGwei,
         uint256 ethPriceUsd,
-        uint256 ts
+        uint256 ts,
+        bytes32 lifiDataHash,
+        bool cashSettlement
     ) internal pure returns (bytes32 result) {
         assembly {
             // Get free memory pointer
@@ -108,8 +110,9 @@ library SignatureUtils {
             mstore(add(ptr, 96), currentPriceGwei)
             mstore(add(ptr, 128), ethPriceUsd)
             mstore(add(ptr, 160), ts)
-            // Total: 6 * 32 = 192 bytes
-            result := keccak256(ptr, 192)
+            mstore(add(ptr, 192), lifiDataHash)
+            mstore(add(ptr, 224), cashSettlement)
+            result := keccak256(ptr, 256)
         }
     }
 }
